@@ -1,8 +1,8 @@
-import random
 import matplotlib.pyplot as plt
 import numpy as np
+from math import log
 
-x = np.array([round(random.random(), 3) for _ in range(1000)])  # create array with 1000 random values between 0 and 1
+x = np.random.uniform(0, 1, 1000)  # create array with 1000 random values between 0 and 1
 plt.hist(x)     # plot array to historgram
 plt.show()
 
@@ -16,8 +16,8 @@ for i in range(1000):
 
 
 dminus = np.empty(1000)
-for j in range(1000):
-    dminus[j] = x[j] - ((j + 1) - 1) / 1000.0
+for h in range(1000):
+    dminus[h] = x[h] - ((h + 1) - 1) / 1000.0
 
 if np.max(dplus) < np.max(dminus):  # compare max values and assign highest to dmax
     dmax = np.max(dminus)
@@ -80,4 +80,24 @@ else:
     print "xnotsquare: ", xnotsquare, " is greater than xalpha: ", xalpha
     print "numbers are not uniformly distributed"
 
-# TODO Steps 2 and 3
+# INVERSE TRANSFORM
+
+exprand = np.empty(1000)    # empty array to put exponentially distributed numbers into
+
+for r in range(1000):
+    exprand[r] = (-1.0/3.0)*log(x[r])
+
+plt.hist(exprand)   # plot exponential distribution to histogram
+plt.show()
+
+# Q-Q PLOT
+
+y = np.empty(1000)
+for j in range(1000):
+    y[j] = ((j+1)-0.5)/1000
+    y[j] = (-1.0/3.0)*log(y[j])
+
+plt.scatter(exprand, y)
+plt.show()
+
+# TODO Step 3
