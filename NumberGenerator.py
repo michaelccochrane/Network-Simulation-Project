@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from math import log
+import random
 
 x = np.random.uniform(0, 1, 1000)  # create array with 1000 random values between 0 and 1
 plt.hist(x)     # plot array to historgram
@@ -101,3 +102,91 @@ plt.scatter(exprand, y)
 plt.show()
 
 # TODO Step 3
+
+mu = 10                         # value of mu
+lamb = [4, 6, 8, 10, 12, 14, 16, 18]  # list of random lambda values to choose from
+queue = []
+
+interarrivaltime = np.empty(1000)   # array for inter-arrival times
+servicetime = np.empty(1000)        # array for service times
+
+interarrivaltime[0] = 0 # inter-arrival time for first packet will always be 0
+
+for inttime in range(999):  # loop for generating inter-arrival times
+    interarrivaltime[inttime+1] = (-1.0/random.choice(lamb))*log(x[inttime])
+
+for servtime in range(1000):    # loop for generating service times
+    servicetime[servtime] = (-1.0/mu)*log(x[servtime])
+
+
+arrivaltime = np.empty(1000)
+arrivaltime[0] = 0
+for a in range(999):
+    arrivaltime[a+1] = arrivaltime[a] + interarrivaltime[a+1]
+
+timeserviceends = np.empty(1000)
+timeserviceends[0] = servicetime[0]
+for tse in range(999):
+    if arrivaltime[tse+1] >= timeserviceends[tse]:
+        timeserviceends[tse+1] = arrivaltime[tse+1] + servicetime[tse+1]
+    else:
+        timeserviceends[tse+1] = timeserviceends[tse] + servicetime[tse+1]
+
+timeservicebegins = np.empty(1000)
+timeservicebegins[0] = 0
+for tsb in range(999):
+    if arrivaltime[tsb+1] >= timeserviceends[tsb]:
+        timeservicebegins[tsb+1] = arrivaltime[tsb+1]
+    else:
+        timeservicebegins[tsb+1] = timeserviceends[tsb]
+
+waittime = np.empty(1000)
+for wt in range(1000):
+    waittime[wt] = timeservicebegins[wt] - arrivaltime[wt]
+
+totalwaittime = np.sum(waittime)
+totalsimulationtime = timeserviceends[999]
+
+
+"""
+for bla in range(10):
+    print np.round(interarrivaltime[bla], 0)
+
+print '\n'
+for blb in range(10):
+    print np.round(arrivaltime[blb], 0)
+
+print '\n'
+for blc in range(10):
+    print np.round(servicetime[blc], 0)
+
+print '\n'
+for bld in range(10):
+    print np.round(timeservicebegins[bld], 0)
+
+print '\n'
+for ble in range(10):
+    print np.round(waittime[ble], 0)
+
+print '\n'
+for blf in range(10):
+    print np.round(timeserviceends[blf], 0)
+"""
+
+
+print 'Total wait time in system: ', totalwaittime
+print 'Total duration of simulation: ', totalsimulationtime
+
+W = totalwaittime/1000
+L = totalwaittime/totalsimulationtime
+
+print 'Average waiting time in system: ', W
+print 'Average number of clients in system: ', L
+
+
+# for each packet generate two random numbers
+# when new packet arrives, do I have previous packets in system
+# calculate L and W, compare with Little Theorem
+# theoretical value for L slide 25, value for W  slide 28
+# W - total waiting time divided by 1000 for average waiting time
+# L - total waiting time divided by total simulation time
