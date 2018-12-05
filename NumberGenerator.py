@@ -88,7 +88,7 @@ exprand = np.empty(1000)    # empty array to put exponentially distributed numbe
 for r in range(1000):
     exprand[r] = (-1.0/3.0)*log(x[r])
 
-plt.hist(exprand)   # plot exponential distribution to histogram
+plt.hist(exprand)           # plot exponential distribution to histogram
 plt.show()
 
 # Q-Q PLOT
@@ -101,88 +101,79 @@ for j in range(1000):
 plt.scatter(exprand, y)
 plt.show()
 
-# TODO Step 3
-
-mu = 10                         # value of mu
-lamb = [4, 6, 8, 10, 12, 14, 16, 18]  # list of random lambda values to choose from
-queue = []
-
-interarrivaltime = np.empty(1000)   # array for inter-arrival times
-servicetime = np.empty(1000)        # array for service times
-
-interarrivaltime[0] = 0 # inter-arrival time for first packet will always be 0
-
-for inttime in range(999):  # loop for generating inter-arrival times
-    interarrivaltime[inttime+1] = (-1.0/random.choice(lamb))*log(x[inttime])
-
-for servtime in range(1000):    # loop for generating service times
-    servicetime[servtime] = (-1.0/mu)*log(x[servtime])
+# Single Server Simulation
 
 
-arrivaltime = np.empty(1000)
-arrivaltime[0] = 0
-for a in range(999):
-    arrivaltime[a+1] = arrivaltime[a] + interarrivaltime[a+1]
+class Stats:
+    def __init__(self, avgw, avgl):
+        self.w = avgw
+        self.l = avgl
 
-timeserviceends = np.empty(1000)
-timeserviceends[0] = servicetime[0]
-for tse in range(999):
-    if arrivaltime[tse+1] >= timeserviceends[tse]:
-        timeserviceends[tse+1] = arrivaltime[tse+1] + servicetime[tse+1]
-    else:
-        timeserviceends[tse+1] = timeserviceends[tse] + servicetime[tse+1]
+def server_simulation(lamb):
 
-timeservicebegins = np.empty(1000)
-timeservicebegins[0] = 0
-for tsb in range(999):
-    if arrivaltime[tsb+1] >= timeserviceends[tsb]:
-        timeservicebegins[tsb+1] = arrivaltime[tsb+1]
-    else:
-        timeservicebegins[tsb+1] = timeserviceends[tsb]
+    mu = 10  # value of mu
 
-waittime = np.empty(1000)
-for wt in range(1000):
-    waittime[wt] = timeservicebegins[wt] - arrivaltime[wt]
+    interarrivaltime = np.empty(1000)  # array for inter-arrival times
+    servicetime = np.empty(1000)  # array for service times
 
-totalwaittime = np.sum(waittime)
-totalsimulationtime = timeserviceends[999]
+    interarrivaltime[0] = 0  # inter-arrival time for first packet will always be 0
 
+    for inttime in range(999):  # loop for generating inter-arrival times using inverse transform
+        interarrivaltime[inttime + 1] = (-1.0 / lamb) * log(x[inttime])
 
-"""
-for bla in range(10):
-    print np.round(interarrivaltime[bla], 0)
+    for servtime in range(1000):  # loop for generating service times using inverse transform
+        servicetime[servtime] = (-1.0 / mu) * log(x[servtime])
 
-print '\n'
-for blb in range(10):
-    print np.round(arrivaltime[blb], 0)
+    arrivaltime = np.empty(1000)  # array for arrival times
+    arrivaltime[0] = 0  # arrival time first packet will always be 0
+    for a in range(999):  # arrival time for packet n = arrivaltime[n-1] + interarrivaltime[n]
+        arrivaltime[a + 1] = arrivaltime[a] + interarrivaltime[a + 1]
 
-print '\n'
-for blc in range(10):
-    print np.round(servicetime[blc], 0)
+    timeserviceends = np.empty(1000)  # array for the time when service ends
+    timeserviceends[0] = servicetime[0]  # time service ends for the first packet will always be its service time
+    for tse in range(999):  # loop for generating time service ends
+        if arrivaltime[tse + 1] >= timeserviceends[tse]:  # if arrival time of n is greater than time service ends of n-1
+            timeserviceends[tse + 1] = arrivaltime[tse + 1] + servicetime[tse + 1]  # packet will not be queued
+        else:
+            timeserviceends[tse + 1] = timeserviceends[tse] + servicetime[tse + 1]
 
-print '\n'
-for bld in range(10):
-    print np.round(timeservicebegins[bld], 0)
+    timeservicebegins = np.empty(1000)  # array for time service begins
+    timeservicebegins[0] = 0  # for first packet service will always begin at 0
+    for tsb in range(999):  # loop for generating time service begins
+        if arrivaltime[tsb + 1] >= timeserviceends[tsb]:
+            timeservicebegins[tsb + 1] = arrivaltime[tsb + 1]
+        else:
+            timeservicebegins[tsb + 1] = timeserviceends[tsb]
 
-print '\n'
-for ble in range(10):
-    print np.round(waittime[ble], 0)
+    waittime = np.empty(1000)
+    for wt in range(1000):
+        waittime[wt] = timeservicebegins[wt] - arrivaltime[wt]
 
-print '\n'
-for blf in range(10):
-    print np.round(timeserviceends[blf], 0)
-"""
+    totalwaittime = np.sum(waittime)  # total wait time will be the sum of all wait times
+    totalsimulationtime = timeserviceends[
+        999]  # total simulation time will be when the service of the last packets ends
 
+    W = totalwaittime / 1000  # the average wait time will be total wait time divided by number of clients
+    L = totalwaittime / totalsimulationtime  # average clients in system will be total wait time divided by total simulation time
 
-print 'Total wait time in system: ', totalwaittime
-print 'Total duration of simulation: ', totalsimulationtime
+    return Stats(W, L)
 
-W = totalwaittime/1000
-L = totalwaittime/totalsimulationtime
+samplesize = 100
 
-print 'Average waiting time in system: ', W
-print 'Average number of clients in system: ', L
+actualW = np.empty(samplesize)
+actualL = np.empty(samplesize)
 
+for inst in range(samplesize):
+    actualW[inst] = server_simulation(inst+1).w
+    actualL[inst] = server_simulation(inst+1).l
+
+plt.scatter(range(0, samplesize), actualW)
+plt.show()
+
+plt.scatter(range(0, samplesize), actualL)
+plt.show()
+
+# TODO calculate theoretical values of L and W then plot
 
 # for each packet generate two random numbers
 # when new packet arrives, do I have previous packets in system
