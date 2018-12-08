@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from math import log
-import random
 
+print 'NET4001 Final Project by Michael Cochrane (100941655) and Joshua Nelson (100981092)'
 x = np.random.uniform(0, 1, 1000)  # create array with 1000 random values between 0 and 1
 plt.hist(x)     # plot array to historgram
+plt.title('Uniform Distribution')
 plt.show()
 
 x.sort()    # sorts array from lowest to highest, needed for kolmogorov smirnov
@@ -13,7 +14,7 @@ x.sort()    # sorts array from lowest to highest, needed for kolmogorov smirnov
 
 dplus = np.empty(1000)  # create empty arrays for calculations of dplus and dminus
 for i in range(1000):
-    dplus[i] = (i + 1) / 1000.0- x[i]
+    dplus[i] = (i + 1) / 1000.0 - x[i]
 
 
 dminus = np.empty(1000)
@@ -89,6 +90,7 @@ for r in range(1000):
     exprand[r] = (-1.0/3.0)*log(x[r])
 
 plt.hist(exprand)           # plot exponential distribution to histogram
+plt.title('Exponential Distribution')
 plt.show()
 
 # Q-Q PLOT
@@ -99,9 +101,11 @@ for j in range(1000):
     y[j] = (-1.0/3.0)*log(y[j])
 
 plt.scatter(exprand, y)
+plt.title('Q-Q Plot')
 plt.show()
 
 # Single Server Simulation
+mu = 10  # value of mu
 
 
 class Stats:
@@ -110,8 +114,6 @@ class Stats:
         self.l = avgl
 
 def server_simulation(lamb):
-
-    mu = 10  # value of mu
 
     interarrivaltime = np.empty(1000)  # array for inter-arrival times
     servicetime = np.empty(1000)  # array for service times
@@ -147,16 +149,16 @@ def server_simulation(lamb):
 
     waittime = np.empty(1000)
     for wt in range(1000):
-        waittime[wt] = timeservicebegins[wt] - arrivaltime[wt]
+        waittime[wt] = timeserviceends[wt] - arrivaltime[wt]
 
     totalwaittime = np.sum(waittime)  # total wait time will be the sum of all wait times
-    totalsimulationtime = timeserviceends[
-        999]  # total simulation time will be when the service of the last packets ends
+    totalsimulationtime = timeserviceends[999]  # total simulation time will be when the service of the last packets ends
 
     W = totalwaittime / 1000  # the average wait time will be total wait time divided by number of clients
     L = totalwaittime / totalsimulationtime  # average clients in system will be total wait time divided by total simulation time
 
     return Stats(W, L)
+
 
 samplesize = 100
 
@@ -167,17 +169,44 @@ for inst in range(samplesize):
     actualW[inst] = server_simulation(inst+1).w
     actualL[inst] = server_simulation(inst+1).l
 
-plt.scatter(range(0, samplesize), actualW)
+theoryL = np.empty(samplesize)
+theoryW = np.empty(samplesize)
+
+for c in range(samplesize):
+    lam = c + 1.0
+    if lam == mu:
+        theoryL[c] = 0
+        theoryW[c] = 0
+    else:
+        theoryL[c] = lam / (mu - lam)
+        theoryW[c] = 1 / (mu - lam)
+
+
+plt.scatter(range(0, samplesize), actualW, color='red', label='Simulated W')
+plt.scatter(range(0, samplesize), theoryW, color='blue', label='Theoretical W')
+plt.title('Simulated vs Theoretical Average Wait Time in System')
+plt.xlabel('Arrival Rate')
+plt.ylabel('Average Wait Time in System')
+plt.legend()
 plt.show()
 
-plt.scatter(range(0, samplesize), actualL)
+plt.scatter(range(0, samplesize), actualL, color='red', label='Simulated L')
+plt.scatter(range(0, samplesize), theoryL, color='blue', label='Theoretical L')
+plt.title('Simulated vs Theoretical Average Clients in System')
+plt.xlabel('Arrival Rate')
+plt.ylabel('Average Clients in System')
+plt.legend()
 plt.show()
 
-# TODO calculate theoretical values of L and W then plot
+plt.scatter(range(0, samplesize), theoryL)
+plt.title('Theoretical L')
+plt.xlabel('Arrival Rate')
+plt.ylabel('Average Clients in System')
+plt.show()
 
-# for each packet generate two random numbers
-# when new packet arrives, do I have previous packets in system
-# calculate L and W, compare with Little Theorem
-# theoretical value for L slide 25, value for W  slide 28
-# W - total waiting time divided by 1000 for average waiting time
-# L - total waiting time divided by total simulation time
+plt.scatter(range(0, samplesize), theoryW)
+plt.title('Theoretical W')
+plt.xlabel('Arrival Rate')
+plt.ylabel('Average Wait Time in System')
+plt.show()
+
